@@ -1,115 +1,116 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { api } from '../../lib/api'
-import { useToastStore } from '../../stores/toast'
-import PageHeader from '../../components/PageHeader.vue'
-import LoadingState from '../../components/LoadingState.vue'
-import EmptyState from '../../components/EmptyState.vue'
-import BaseModal from '../../components/BaseModal.vue'
-import ConfirmDialog from '../../components/ConfirmDialog.vue'
+import { ref, onMounted } from "vue";
+import { api } from "../../lib/api";
+import { useToastStore } from "../../stores/toast";
+import PageHeader from "../../components/PageHeader.vue";
+import LoadingState from "../../components/LoadingState.vue";
+import EmptyState from "../../components/EmptyState.vue";
+import BaseModal from "../../components/BaseModal.vue";
+import ConfirmDialog from "../../components/ConfirmDialog.vue";
 
-const toast = useToastStore()
+const toast = useToastStore();
 
-const materials = ref([])
-const loading = ref(true)
-const saving = ref(false)
-const deleting = ref(false)
+const materials = ref([]);
+const loading = ref(true);
+const saving = ref(false);
+const deleting = ref(false);
 
-const showForm = ref(false)
-const editingId = ref(null)
-const form = ref(emptyForm())
-const imageFile = ref(null)
-const formError = ref('')
+const showForm = ref(false);
+const editingId = ref(null);
+const form = ref(emptyForm());
+const imageFile = ref(null);
+const formError = ref("");
 
-const showConfirm = ref(false)
-const targetId = ref(null)
+const showConfirm = ref(false);
+const targetId = ref(null);
 
 function emptyForm() {
-  return { title: '', content: '', order: 0 }
+  return { title: "", content: "", order: 0 };
 }
 
 async function load() {
-  loading.value = true
+  loading.value = true;
   try {
-    const { data } = await api.get('/materials')
-    materials.value = data.data
+    const { data } = await api.get("/materials");
+    materials.value = data.data;
   } catch {
-    toast.error('Gagal memuat materi.')
+    toast.error("Gagal memuat materi.");
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 function openCreate() {
-  editingId.value = null
-  form.value = emptyForm()
-  imageFile.value = null
-  formError.value = ''
-  showForm.value = true
+  editingId.value = null;
+  form.value = emptyForm();
+  imageFile.value = null;
+  formError.value = "";
+  showForm.value = true;
 }
 
 function openEdit(m) {
-  editingId.value = m.id
-  form.value = { title: m.title, content: m.content, order: m.order }
-  imageFile.value = null
-  formError.value = ''
-  showForm.value = true
+  editingId.value = m.id;
+  form.value = { title: m.title, content: m.content, order: m.order };
+  imageFile.value = null;
+  formError.value = "";
+  showForm.value = true;
 }
 
 async function submitForm() {
-  saving.value = true
-  formError.value = ''
+  saving.value = true;
+  formError.value = "";
   try {
-    const fd = new FormData()
-    fd.append('title', form.value.title)
-    fd.append('content', form.value.content)
-    fd.append('order', form.value.order ?? 0)
-    if (imageFile.value) fd.append('image', imageFile.value)
+    const fd = new FormData();
+    fd.append("title", form.value.title);
+    fd.append("content", form.value.content);
+    fd.append("order", form.value.order ?? 0);
+    if (imageFile.value) fd.append("image", imageFile.value);
 
     if (editingId.value) {
-      fd.append('_method', 'PUT')
-      await api.post(`/materials/${editingId.value}`, fd)
-      toast.success('Materi diperbarui.')
+      await api.post(`/materials/${editingId.value}`, fd);
+      toast.success("Materi diperbarui.");
     } else {
-      await api.post('/materials', fd)
-      toast.success('Materi ditambahkan.')
+      await api.post("/materials", fd);
+      toast.success("Materi ditambahkan.");
     }
-    showForm.value = false
-    await load()
+    showForm.value = false;
+    await load();
   } catch (e) {
-    formError.value = e.response?.data?.message || 'Gagal menyimpan materi.'
+    formError.value = e.response?.data?.message || "Gagal menyimpan materi.";
   } finally {
-    saving.value = false
+    saving.value = false;
   }
 }
 
 function confirmDelete(id) {
-  targetId.value = id
-  showConfirm.value = true
+  targetId.value = id;
+  showConfirm.value = true;
 }
 
 async function handleDelete() {
-  deleting.value = true
+  deleting.value = true;
   try {
-    await api.delete(`/materials/${targetId.value}`)
-    toast.success('Materi dihapus.')
-    showConfirm.value = false
-    await load()
+    await api.delete(`/materials/${targetId.value}`);
+    toast.success("Materi dihapus.");
+    showConfirm.value = false;
+    await load();
   } catch {
-    toast.error('Gagal menghapus materi.')
+    toast.error("Gagal menghapus materi.");
   } finally {
-    deleting.value = false
+    deleting.value = false;
   }
 }
 
-onMounted(load)
+onMounted(load);
 </script>
 
 <template>
   <div>
     <PageHeader title="Materi" description="Bacaan seputar SIBI & BISINDO.">
       <template #actions>
-        <button class="btn btn-primary" @click="openCreate">+ Tambah Materi</button>
+        <button class="btn btn-primary" @click="openCreate">
+          + Tambah Materi
+        </button>
       </template>
     </PageHeader>
 
@@ -124,25 +125,52 @@ onMounted(load)
           <p>{{ m.content }}</p>
           <div class="row-actions">
             <button class="btn btn-ghost" @click="openEdit(m)">Edit</button>
-            <button class="btn btn-danger" @click="confirmDelete(m.id)">Hapus</button>
+            <button class="btn btn-danger" @click="confirmDelete(m.id)">
+              Hapus
+            </button>
           </div>
         </div>
       </div>
     </div>
 
-    <BaseModal v-if="showForm" wide :title="editingId ? 'Edit Materi' : 'Tambah Materi'" @close="showForm = false">
+    <BaseModal
+      v-if="showForm"
+      wide
+      :title="editingId ? 'Edit Materi' : 'Tambah Materi'"
+      @close="showForm = false"
+    >
       <form class="form-grid" @submit.prevent="submitForm">
         <div class="field">
           <label>Judul</label>
-          <input v-model="form.title" class="input" required placeholder="mis. SIBI" />
+          <input
+            v-model="form.title"
+            class="input"
+            required
+            placeholder="mis. SIBI"
+          />
         </div>
         <div class="field">
-          <label>Gambar {{ editingId ? '(kosongkan jika tidak diganti)' : '(opsional)' }}</label>
-          <input type="file" accept="image/*" class="input" @change="imageFile = $event.target.files[0]" />
+          <label
+            >Gambar
+            {{
+              editingId ? "(kosongkan jika tidak diganti)" : "(opsional)"
+            }}</label
+          >
+          <input
+            type="file"
+            accept="image/*"
+            class="input"
+            @change="imageFile = $event.target.files[0]"
+          />
         </div>
         <div class="field">
           <label>Konten</label>
-          <textarea v-model="form.content" class="textarea" style="min-height: 200px" required></textarea>
+          <textarea
+            v-model="form.content"
+            class="textarea"
+            style="min-height: 200px"
+            required
+          ></textarea>
         </div>
         <div class="field">
           <label>Urutan</label>
@@ -152,15 +180,22 @@ onMounted(load)
         <p v-if="formError" class="form-error">{{ formError }}</p>
 
         <div class="form-actions">
-          <button type="button" class="btn btn-ghost" @click="showForm = false">Batal</button>
+          <button type="button" class="btn btn-ghost" @click="showForm = false">
+            Batal
+          </button>
           <button type="submit" class="btn btn-primary" :disabled="saving">
-            {{ saving ? 'Menyimpan...' : 'Simpan' }}
+            {{ saving ? "Menyimpan..." : "Simpan" }}
           </button>
         </div>
       </form>
     </BaseModal>
 
-    <ConfirmDialog v-if="showConfirm" :loading="deleting" @confirm="handleDelete" @cancel="showConfirm = false" />
+    <ConfirmDialog
+      v-if="showConfirm"
+      :loading="deleting"
+      @confirm="handleDelete"
+      @cancel="showConfirm = false"
+    />
   </div>
 </template>
 

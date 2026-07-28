@@ -1,147 +1,151 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { api } from '../../lib/api'
-import { useToastStore } from '../../stores/toast'
-import PageHeader from '../../components/PageHeader.vue'
-import LoadingState from '../../components/LoadingState.vue'
-import EmptyState from '../../components/EmptyState.vue'
-import BaseModal from '../../components/BaseModal.vue'
-import ConfirmDialog from '../../components/ConfirmDialog.vue'
+import { ref, onMounted } from "vue";
+import { api } from "../../lib/api";
+import { useToastStore } from "../../stores/toast";
+import PageHeader from "../../components/PageHeader.vue";
+import LoadingState from "../../components/LoadingState.vue";
+import EmptyState from "../../components/EmptyState.vue";
+import BaseModal from "../../components/BaseModal.vue";
+import ConfirmDialog from "../../components/ConfirmDialog.vue";
 
-const toast = useToastStore()
+const toast = useToastStore();
 
-const questions = ref([])
-const loading = ref(true)
-const saving = ref(false)
-const deleting = ref(false)
+const questions = ref([]);
+const loading = ref(true);
+const saving = ref(false);
+const deleting = ref(false);
 
-const showForm = ref(false)
-const editingId = ref(null)
-const form = ref(emptyForm())
-const imageFile = ref(null)
-const formError = ref('')
+const showForm = ref(false);
+const editingId = ref(null);
+const form = ref(emptyForm());
+const imageFile = ref(null);
+const formError = ref("");
 
-const showConfirm = ref(false)
-const targetId = ref(null)
+const showConfirm = ref(false);
+const targetId = ref(null);
 
 function emptyForm() {
   return {
-    question_text: '',
+    question_text: "",
     order: 0,
     options: [
-      { option_text: '', is_correct: true },
-      { option_text: '', is_correct: false },
-      { option_text: '', is_correct: false },
-      { option_text: '', is_correct: false },
+      { option_text: "", is_correct: true },
+      { option_text: "", is_correct: false },
+      { option_text: "", is_correct: false },
+      { option_text: "", is_correct: false },
     ],
-  }
+  };
 }
 
 async function load() {
-  loading.value = true
+  loading.value = true;
   try {
-    const { data } = await api.get('/quiz-questions')
-    questions.value = data.data
+    const { data } = await api.get("/quiz-questions");
+    questions.value = data.data;
   } catch {
-    toast.error('Gagal memuat soal kuis.')
+    toast.error("Gagal memuat soal kuis.");
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 function openCreate() {
-  editingId.value = null
-  form.value = emptyForm()
-  imageFile.value = null
-  formError.value = ''
-  showForm.value = true
+  editingId.value = null;
+  form.value = emptyForm();
+  imageFile.value = null;
+  formError.value = "";
+  showForm.value = true;
 }
 
 function openEdit(q) {
-  editingId.value = q.id
+  editingId.value = q.id;
   form.value = {
     question_text: q.question_text,
     order: q.order,
-    options: q.options.map((o) => ({ option_text: o.option_text, is_correct: o.is_correct })),
-  }
-  imageFile.value = null
-  formError.value = ''
-  showForm.value = true
+    options: q.options.map((o) => ({
+      option_text: o.option_text,
+      is_correct: o.is_correct,
+    })),
+  };
+  imageFile.value = null;
+  formError.value = "";
+  showForm.value = true;
 }
 
 function setCorrect(index) {
   form.value.options.forEach((o, i) => {
-    o.is_correct = i === index
-  })
+    o.is_correct = i === index;
+  });
 }
 
 async function submitForm() {
-  formError.value = ''
+  formError.value = "";
 
   if (form.value.options.some((o) => !o.option_text.trim())) {
-    formError.value = 'Semua 4 pilihan jawaban wajib diisi.'
-    return
+    formError.value = "Semua 4 pilihan jawaban wajib diisi.";
+    return;
   }
   if (!form.value.options.some((o) => o.is_correct)) {
-    formError.value = 'Pilih salah satu jawaban yang benar.'
-    return
+    formError.value = "Pilih salah satu jawaban yang benar.";
+    return;
   }
 
-  saving.value = true
+  saving.value = true;
   try {
-    const fd = new FormData()
-    fd.append('question_text', form.value.question_text)
-    fd.append('order', form.value.order ?? 0)
+    const fd = new FormData();
+    fd.append("question_text", form.value.question_text);
+    fd.append("order", form.value.order ?? 0);
     form.value.options.forEach((o, i) => {
-      fd.append(`options[${i}][option_text]`, o.option_text)
-      fd.append(`options[${i}][is_correct]`, o.is_correct ? '1' : '0')
-    })
-    if (imageFile.value) fd.append('image', imageFile.value)
+      fd.append(`options[${i}][option_text]`, o.option_text);
+      fd.append(`options[${i}][is_correct]`, o.is_correct ? "1" : "0");
+    });
+    if (imageFile.value) fd.append("image", imageFile.value);
 
     if (editingId.value) {
-      fd.append('_method', 'PUT')
-      await api.post(`/quiz-questions/${editingId.value}`, fd)
-      toast.success('Soal diperbarui.')
+      await api.post(`/quiz-questions/${editingId.value}`, fd);
+      toast.success("Soal diperbarui.");
     } else {
-      await api.post('/quiz-questions', fd)
-      toast.success('Soal ditambahkan.')
+      await api.post("/quiz-questions", fd);
+      toast.success("Soal ditambahkan.");
     }
-    showForm.value = false
-    await load()
+    showForm.value = false;
+    await load();
   } catch (e) {
-    formError.value = e.response?.data?.message || 'Gagal menyimpan soal.'
+    formError.value = e.response?.data?.message || "Gagal menyimpan soal.";
   } finally {
-    saving.value = false
+    saving.value = false;
   }
 }
 
 function confirmDelete(id) {
-  targetId.value = id
-  showConfirm.value = true
+  targetId.value = id;
+  showConfirm.value = true;
 }
 
 async function handleDelete() {
-  deleting.value = true
+  deleting.value = true;
   try {
-    await api.delete(`/quiz-questions/${targetId.value}`)
-    toast.success('Soal dihapus.')
-    showConfirm.value = false
-    await load()
+    await api.delete(`/quiz-questions/${targetId.value}`);
+    toast.success("Soal dihapus.");
+    showConfirm.value = false;
+    await load();
   } catch {
-    toast.error('Gagal menghapus soal.')
+    toast.error("Gagal menghapus soal.");
   } finally {
-    deleting.value = false
+    deleting.value = false;
   }
 }
 
-onMounted(load)
+onMounted(load);
 </script>
 
 <template>
   <div>
     <PageHeader title="Kuis" description="Bank soal untuk fitur kuis di app.">
       <template #actions>
-        <button class="btn btn-primary" @click="openCreate">+ Tambah Soal</button>
+        <button class="btn btn-primary" @click="openCreate">
+          + Tambah Soal
+        </button>
       </template>
     </PageHeader>
 
@@ -162,31 +166,57 @@ onMounted(load)
             <td class="question-cell">{{ q.question_text }}</td>
             <td>
               <span class="badge badge-teal">
-                {{ q.options.find((o) => o.is_correct)?.option_text || '-' }}
+                {{ q.options.find((o) => o.is_correct)?.option_text || "-" }}
               </span>
             </td>
             <td class="row-actions">
               <button class="btn btn-ghost" @click="openEdit(q)">Edit</button>
-              <button class="btn btn-danger" @click="confirmDelete(q.id)">Hapus</button>
+              <button class="btn btn-danger" @click="confirmDelete(q.id)">
+                Hapus
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <BaseModal v-if="showForm" wide :title="editingId ? 'Edit Soal' : 'Tambah Soal'" @close="showForm = false">
+    <BaseModal
+      v-if="showForm"
+      wide
+      :title="editingId ? 'Edit Soal' : 'Tambah Soal'"
+      @close="showForm = false"
+    >
       <form class="form-grid" @submit.prevent="submitForm">
         <div class="field">
           <label>Pertanyaan</label>
-          <textarea v-model="form.question_text" class="textarea" required></textarea>
+          <textarea
+            v-model="form.question_text"
+            class="textarea"
+            required
+          ></textarea>
         </div>
         <div class="field">
-          <label>Gambar {{ editingId ? '(kosongkan jika tidak diganti)' : '(opsional)' }}</label>
-          <input type="file" accept="image/*" class="input" @change="imageFile = $event.target.files[0]" />
+          <label
+            >Gambar
+            {{
+              editingId ? "(kosongkan jika tidak diganti)" : "(opsional)"
+            }}</label
+          >
+          <input
+            type="file"
+            accept="image/*"
+            class="input"
+            @change="imageFile = $event.target.files[0]"
+          />
         </div>
 
         <div class="field">
-          <label>Pilihan Jawaban <span class="hint">(pilih radio di sebelah jawaban yang benar)</span></label>
+          <label
+            >Pilihan Jawaban
+            <span class="hint"
+              >(pilih radio di sebelah jawaban yang benar)</span
+            ></label
+          >
           <div v-for="(opt, i) in form.options" :key="i" class="option-row">
             <input
               type="radio"
@@ -194,7 +224,12 @@ onMounted(load)
               :checked="opt.is_correct"
               @change="setCorrect(i)"
             />
-            <input v-model="opt.option_text" class="input" :placeholder="`Pilihan ${i + 1}`" required />
+            <input
+              v-model="opt.option_text"
+              class="input"
+              :placeholder="`Pilihan ${i + 1}`"
+              required
+            />
           </div>
         </div>
 
@@ -206,15 +241,22 @@ onMounted(load)
         <p v-if="formError" class="form-error">{{ formError }}</p>
 
         <div class="form-actions">
-          <button type="button" class="btn btn-ghost" @click="showForm = false">Batal</button>
+          <button type="button" class="btn btn-ghost" @click="showForm = false">
+            Batal
+          </button>
           <button type="submit" class="btn btn-primary" :disabled="saving">
-            {{ saving ? 'Menyimpan...' : 'Simpan' }}
+            {{ saving ? "Menyimpan..." : "Simpan" }}
           </button>
         </div>
       </form>
     </BaseModal>
 
-    <ConfirmDialog v-if="showConfirm" :loading="deleting" @confirm="handleDelete" @cancel="showConfirm = false" />
+    <ConfirmDialog
+      v-if="showConfirm"
+      :loading="deleting"
+      @confirm="handleDelete"
+      @cancel="showConfirm = false"
+    />
   </div>
 </template>
 
@@ -268,7 +310,7 @@ tr:last-child td {
   gap: 10px;
   margin-bottom: 8px;
 }
-.option-row input[type='radio'] {
+.option-row input[type="radio"] {
   width: 18px;
   height: 18px;
   accent-color: var(--teal-500);
