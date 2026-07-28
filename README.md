@@ -1,80 +1,113 @@
-# Earme Admin Dashboard (Vue 3 + Vite)
+<div align="center">
 
-Dashboard web buat mengelola semua konten Earme: kategori, kosakata (+ upload video),
-materi SIBI/BISINDO, bank soal kuis, dan artikel. Nyambung ke **Earme Backend (Laravel API)**
-pakai token auth (Sanctum).
+# ✋ Earme Admin Dashboard
 
-Sudah aku coba `npm install && npm run build` di sini dan **berhasil tanpa error**, jadi filenya siap pakai.
+**Content management dashboard for Earme — a Sign Language Dictionary Platform**
 
-## 1. Setup
+![Vue](https://img.shields.io/badge/Vue-3-4FC08D?logo=vuedotjs&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-Bundler-646CFF?logo=vite&logoColor=white)
+![Pinia](https://img.shields.io/badge/State-Pinia-FFD859)
+![Axios](https://img.shields.io/badge/HTTP-Axios-5A29E4)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
+[Backend API →](https://github.com/wiwinwidiaaan/earme-backend) · [Mobile App →](https://github.com/wiwinwidiaaan/earme-flutter)
+
+</div>
+
+---
+
+## About
+
+A web dashboard for managing all of Earme's content — vocabulary entries, gesture
+videos, learning material, quiz questions, and articles — backed by the
+[Earme Laravel API](https://github.com/wiwinwidiaaan/earme-backend). Built as the
+admin-facing counterpart to the Earme mobile app.
+
+<!--
+  📸 Add screenshots of the dashboard once you have them, e.g.:
+  ![Dashboard screenshot](docs/screenshot-dashboard.png)
+  ![Category CRUD screenshot](docs/screenshot-categories.png)
+-->
+
+## Features
+
+- 🔐 Token-based login (Laravel Sanctum)
+- 📊 Dashboard overview with live content counts
+- ▤ Full CRUD for **categories** (Direktori / Kategori sections)
+- ✋ Full CRUD for **vocabulary entries**, including video + thumbnail upload
+- ▥ Full CRUD for **learning material** (SIBI/BISINDO) with image upload
+- ？ Full CRUD for **quiz questions**, with a radio-button UI for marking the correct answer
+- ▦ Full CRUD for **articles**, with cover image and publish date
+- 🔔 Toast notifications, confirm-before-delete dialogs, loading/empty states throughout
+
+## Tech stack
+
+| Layer      | Technology                                            |
+| ---------- | ----------------------------------------------------- |
+| Framework  | Vue 3 (Composition API, `<script setup>`)             |
+| Build tool | Vite                                                  |
+| Routing    | Vue Router 4                                          |
+| State      | Pinia                                                 |
+| HTTP       | Axios                                                 |
+| Styling    | Hand-written CSS with design tokens (no UI framework) |
+
+## Design
+
+Shares a color palette (deep teal + clay/coral) and typography (Poppins + Inter) with
+the Flutter mobile app, so the dashboard reads as part of the same product rather than a
+generic admin template bolted on afterward.
+
+## Getting started
+
+> Requirements: Node.js ≥ 18, the [Earme backend](https://github.com/wiwinwidiaaan/earme-backend) running locally or deployed
 
 ```bash
-cd earme-admin
 npm install
 cp .env.example .env
 ```
 
-Edit `.env` sesuai alamat backend Laravel kamu:
+Point `.env` at your backend:
+
 ```
 VITE_API_BASE_URL=http://localhost:8000/api
 VITE_STORAGE_BASE_URL=http://localhost:8000
 ```
 
-Jalankan backend Laravel-nya dulu (`php artisan serve`), baru:
-
 ```bash
 npm run dev
 ```
 
-Buka `http://localhost:5173`, login pakai akun seeder: `admin@earme.test` / `password`.
+Log in with the seeded admin account from the backend: `admin@earme.test` / `password`.
 
-> **Penting:** backend Laravel-nya perlu diizinkan menerima request dari `http://localhost:5173`.
-> Ini sudah di-setting di `config/cors.php` pada paket backend sebelumnya — kalau port dev
-> server kamu beda, tambahkan portnya di situ juga.
-
-## 2. Build untuk produksi
+## Build for production
 
 ```bash
 npm run build
 ```
-Hasilnya ada di folder `dist/` — tinggal di-deploy ke hosting static apa saja (Netlify, Vercel, atau folder `public` di server yang sama dengan Laravel).
 
-## 3. Fitur
+Outputs a static `dist/` folder, deployable to any static host (Netlify, Vercel, or
+served from the same box as the Laravel backend).
 
-- **Login** — pakai Sanctum token, disimpan di localStorage
-- **Dashboard** — ringkasan jumlah kategori, kosakata, materi, soal kuis, artikel
-- **Kategori** — CRUD, section Direktori/Kategori
-- **Kosakata** — CRUD dengan upload video (wajib) + thumbnail (opsional), filter per kategori
-- **Materi** — CRUD dengan upload gambar
-- **Kuis** — CRUD soal + 4 pilihan jawaban (radio buat nentuin yang benar)
-- **Artikel** — CRUD dengan upload gambar + tanggal terbit
-
-## 4. Desain
-
-Pakai palet warna yang sama dengan app Flutter (teal + clay/coral) supaya dashboard ini
-kerasa satu produk sama app mobile-nya, bukan template admin generik. Font: Poppins buat
-judul, Inter buat isi (di-load dari Google Fonts di `index.html`).
-
-## 5. Struktur folder
+## Project structure
 
 ```
 src/
   lib/           # axios instance, storage URL helper
-  stores/        # Pinia: auth, toast notification
+  stores/        # Pinia: auth, toast notifications
   router/        # routes + auth guard
   layouts/       # AdminLayout (sidebar + topbar)
   components/    # BaseModal, ConfirmDialog, ToastStack, EmptyState, LoadingState, PageHeader
   views/
     LoginView.vue
     DashboardView.vue
-    categories/
-    entries/
-    materials/
-    quiz/
-    articles/
+    categories/ · entries/ · materials/ · quiz/ · articles/
 ```
 
-## 6. Yang belum ada
+## Related repos
 
-- Manajemen user admin lain (create/edit admin baru) — saat ini cuma 1 admin dari seeder
-- Pagination di tabel kosakata (saat ini ambil sampai 200 item sekaligus — cukup untuk skala kamus ini, tapi kalau datanya jadi ribuan, tambahkan pagination)
+- 🔧 [earme-backend](https://github.com/wiwinwidiaaan/earme-backend) — Laravel REST API
+- 📱 [earme-flutter](https://github.com/wiwinwidiaaan/earme-flutter) — mobile dictionary app
+
+## License
+
+MIT — feel free to use this as a reference for your own projects.
