@@ -18,8 +18,16 @@ const deleting = ref(false);
 const showForm = ref(false);
 const editingId = ref(null);
 const form = ref(emptyForm());
-const imageFile = ref(null);
+const mediaFile = ref(null);
+const mediaPreviewUrl = ref(null);
 const formError = ref("");
+
+function onMediaChange(e) {
+  const file = e.target.files[0] || null;
+  mediaFile.value = file;
+  if (mediaPreviewUrl.value) URL.revokeObjectURL(mediaPreviewUrl.value);
+  mediaPreviewUrl.value = file ? URL.createObjectURL(file) : null;
+}
 
 const showConfirm = ref(false);
 const targetId = ref(null);
@@ -52,7 +60,8 @@ async function load() {
 function openCreate() {
   editingId.value = null;
   form.value = emptyForm();
-  imageFile.value = null;
+  mediaFile.value = null;
+  mediaPreviewUrl.value = null;
   formError.value = "";
   showForm.value = true;
 }
@@ -67,7 +76,9 @@ function openEdit(q) {
       is_correct: o.is_correct,
     })),
   };
-  imageFile.value = null;
+  mediaFile.value = null;
+  // Show the existing media (if any) as the starting preview
+  mediaPreviewUrl.value = q.media_url || null;
   formError.value = "";
   showForm.value = true;
 }
@@ -99,7 +110,7 @@ async function submitForm() {
       fd.append(`options[${i}][option_text]`, o.option_text);
       fd.append(`options[${i}][is_correct]`, o.is_correct ? "1" : "0");
     });
-    if (imageFile.value) fd.append("image", imageFile.value);
+    if (mediaFile.value) fd.append("media", mediaFile.value);
 
     if (editingId.value) {
       await api.post(`/quiz-questions/${editingId.value}`, fd);
@@ -197,17 +208,26 @@ onMounted(load);
         </div>
         <div class="field">
           <label
-            >Gambar
+            >Gambar / Video
             {{
               editingId ? "(kosongkan jika tidak diganti)" : "(opsional)"
             }}</label
           >
           <input
             type="file"
-            accept="image/*"
+            accept="image/*,video/*"
             class="input"
-            @change="imageFile = $event.target.files[0]"
+            @change="onMediaChange"
           />
+          <div v-if="mediaPreviewUrl" class="media-preview">
+            <video
+              v-if="mediaFile ? mediaFile.type.startsWith('video/') : /\.(mp4|mov|webm)$/i.test(mediaPreviewUrl)"
+              :src="mediaPreviewUrl"
+              controls
+              class="preview-el"
+            ></video>
+            <img v-else :src="mediaPreviewUrl" class="preview-el" />
+          </div>
         </div>
 
         <div class="field">
@@ -320,6 +340,15 @@ tr:last-child td {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+.media-preview {
+  margin-top: 10px;
+}
+.preview-el {
+  max-width: 100%;
+  max-height: 220px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
 }
 .form-error {
   background: var(--danger-bg);
